@@ -5,7 +5,6 @@ document.addEventListener('DOMContentLoaded', function() {
     
     mobileMenuBtn.addEventListener('click', function() {
         navLinks.classList.toggle('active');
-        // Меняем иконку меню
         const icon = mobileMenuBtn.querySelector('i');
         if (icon.classList.contains('fa-bars')) {
             icon.classList.remove('fa-bars');
@@ -21,34 +20,27 @@ document.addEventListener('DOMContentLoaded', function() {
     navItems.forEach(item => {
         item.addEventListener('click', function() {
             navLinks.classList.remove('active');
-            // Возвращаем иконку меню
             const icon = mobileMenuBtn.querySelector('i');
             icon.classList.remove('fa-times');
             icon.classList.add('fa-bars');
         });
     });
     
-    // Плавная прокрутка для всех ссылок с якорями
+    // Плавная прокрутка
     document.querySelectorAll('a[href^="#"]').forEach(anchor => {
         anchor.addEventListener('click', function(e) {
             const href = this.getAttribute('href');
-            
-            // Пропускаем якорь "#", который ведет на ту же страницу
             if (href === '#') return;
             
             e.preventDefault();
-            
-            const targetId = href;
-            const targetElement = document.querySelector(targetId);
+            const targetElement = document.querySelector(href);
             
             if (targetElement) {
-                // Закрываем мобильное меню, если оно открыто
                 navLinks.classList.remove('active');
                 const icon = mobileMenuBtn.querySelector('i');
                 icon.classList.remove('fa-times');
                 icon.classList.add('fa-bars');
                 
-                // Плавная прокрутка
                 window.scrollTo({
                     top: targetElement.offsetTop - 80,
                     behavior: 'smooth'
@@ -57,7 +49,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
     
-    // Подсветка текущего раздела в навигации при скролле
+    // Подсветка активного раздела
     const sections = document.querySelectorAll('section');
     const navLinksArray = document.querySelectorAll('.nav-links a');
     
@@ -83,29 +75,137 @@ document.addEventListener('DOMContentLoaded', function() {
     
     window.addEventListener('scroll', highlightNavLink);
     
-    // Анимация появления элементов при скролле
-    const observerOptions = {
+    // ===========================================
+    // АНИМАЦИИ ДЛЯ КАРТОЧЕК ИСТОРИИ
+    // ===========================================
+    const stepElements = document.querySelectorAll('.step');
+    
+    const stepObserver = new IntersectionObserver(function(entries) {
+        entries.forEach((entry, index) => {
+            if (entry.isIntersecting) {
+                setTimeout(() => {
+                    entry.target.classList.add('animated');
+                }, index * 200);
+            }
+        });
+    }, { 
         threshold: 0.1,
         rootMargin: '0px 0px -50px 0px'
-    };
+    });
     
-    const observer = new IntersectionObserver(function(entries) {
+    stepElements.forEach(el => {
+        stepObserver.observe(el);
+    });
+    
+    
+    const typingTitles = document.querySelectorAll('.typing-title');
+    
+    // Функция для запуска анимации печатания
+    function startTypingAnimation(element) {
+        if (element.classList.contains('active')) return;
+        
+        // Получаем текст из элемента
+        const text = element.textContent;
+        element.textContent = '';
+        element.classList.add('active');
+        
+
+        element.style.width = '0';
+        
+      
+        setTimeout(() => {
+            element.style.width = '100%';
+            
+            
+            setTimeout(() => {
+                element.style.borderRight = 'none';
+            }, 3000);
+        }, 300);
+    }
+    
+   
+    const titleObserver = new IntersectionObserver(function(entries) {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                startTypingAnimation(entry.target);
+            }
+        });
+    }, { 
+        threshold: 0.5,
+        rootMargin: '0px 0px -100px 0px'
+    });
+    
+
+    typingTitles.forEach(title => {
+        titleObserver.observe(title);
+    });
+    
+
+    setTimeout(() => {
+        const firstVisibleTitle = Array.from(typingTitles).find(title => {
+            const rect = title.getBoundingClientRect();
+            return rect.top >= 0 && rect.top <= window.innerHeight * 0.8;
+        });
+        
+        if (firstVisibleTitle) {
+            startTypingAnimation(firstVisibleTitle);
+        }
+    }, 1000);
+    
+    
+    const animateElements = document.querySelectorAll(
+        '.feature-card, .resource-card, .fact'
+    );
+    
+    const elementObserver = new IntersectionObserver(function(entries) {
+        entries.forEach((entry, index) => {
+            if (entry.isIntersecting) {
+                setTimeout(() => {
+                    entry.target.classList.add('animated');
+                }, index * 100);
+            }
+        });
+    }, { 
+        threshold: 0.1,
+        rootMargin: '0px 0px -50px 0px'
+    });
+    
+    animateElements.forEach(el => {
+        elementObserver.observe(el);
+    });
+    
+   
+    const fadeInElements = document.querySelectorAll('.feature-card, .app-card, .resource-card, .timeline-item');
+    
+    const fadeObserver = new IntersectionObserver(function(entries) {
         entries.forEach(entry => {
             if (entry.isIntersecting) {
                 entry.target.classList.add('visible');
             }
         });
-    }, observerOptions);
-    
-    // Наблюдаем за элементами, которые должны появляться при скролле
-    const animateElements = document.querySelectorAll('.feature-card, .app-card, .resource-card, .timeline-item');
-    animateElements.forEach(el => {
-        observer.observe(el);
+    }, { 
+        threshold: 0.1,
+        rootMargin: '0px 0px -50px 0px'
     });
     
-    // Добавляем CSS класс для анимации
+    fadeInElements.forEach(el => {
+        fadeObserver.observe(el);
+    });
+    
+
     const style = document.createElement('style');
     style.textContent = `
+        .feature-card, .resource-card, .fact, .stat {
+            opacity: 0;
+            transform: translateY(30px);
+            transition: opacity 0.6s ease, transform 0.6s ease;
+        }
+        
+        .feature-card.animated, .resource-card.animated, .fact.animated, .stat.animated {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        
         .feature-card, .app-card, .resource-card, .timeline-item {
             opacity: 0;
             transform: translateY(20px);
@@ -118,76 +218,9 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         
         .nav-links a.active {
-            color: var(--primary-color) !important;
-            font-weight: 600;
+            color: white !important;
+            font-weight: 700;
         }
     `;
     document.head.appendChild(style);
 });
-
-// Обновленная функция для наблюдения за элементами
-document.addEventListener('DOMContentLoaded', function() {
-    const stepElements = document.querySelectorAll('.step');
-    
-    const stepObserver = new IntersectionObserver(function(entries) {
-        entries.forEach((entry, index) => {
-            if (entry.isIntersecting) {
-                // Добавляем задержку для каждого шага
-                setTimeout(() => {
-                    entry.target.classList.add('animated');
-                }, index * 200);
-            }
-        });
-    }, { threshold: 0.1 });
-    
-    stepElements.forEach(el => {
-        stepObserver.observe(el);
-    });
-    
-    // Анимация для остальных элементов
-    const animateElements = document.querySelectorAll(
-        '.feature-card, .app-card, .resource-card, .fact, .stat'
-    );
-    
-    const elementObserver = new IntersectionObserver(function(entries) {
-        entries.forEach((entry, index) => {
-            if (entry.isIntersecting) {
-                setTimeout(() => {
-                    entry.target.classList.add('animated');
-                }, index * 100);
-            }
-        });
-    }, { threshold: 0.1 });
-    
-    animateElements.forEach(el => {
-        elementObserver.observe(el);
-    });
-});
-
-// Добавляем CSS для новых анимаций
-const newAnimationStyles = document.createElement('style');
-newAnimationStyles.textContent = `
-    .step {
-        opacity: 0;
-        transform: translateY(50px);
-        transition: opacity 0.6s ease, transform 0.6s ease;
-    }
-    
-    .step.animated {
-        opacity: 1;
-        transform: translateY(0);
-    }
-    
-    .feature-card, .app-card, .resource-card, .fact, .stat {
-        opacity: 0;
-        transform: translateY(30px);
-        transition: opacity 0.6s ease, transform 0.6s ease;
-    }
-    
-    .feature-card.animated, .app-card.animated, .resource-card.animated, 
-    .fact.animated, .stat.animated {
-        opacity: 1;
-        transform: translateY(0);
-    }
-`;
-document.head.appendChild(newAnimationStyles);
